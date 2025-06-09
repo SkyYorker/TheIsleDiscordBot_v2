@@ -13,13 +13,8 @@ class DinosaurSelectView(View):
         self.selected_dino = None
         self.dinosaurs = dinosaurs
 
-        self.embed = self.create_dinosaur_embed()
-
-        self.select_menu = Select(
-            placeholder="Выберите динозавра",
-            options=[discord.SelectOption(label=dino) for dino in dinosaurs],
-            custom_id="select_dino"
-        )
+        # Инициализация Select с placeholder
+        self.select_menu = self.create_select_menu()
         self.add_item(self.select_menu)
 
         self.activate_button = Button(
@@ -45,25 +40,47 @@ class DinosaurSelectView(View):
             row=2
         ))
 
-    def create_dinosaur_embed(self) -> Embed:
-        """Создает embed для отображения коллекции динозавров"""
+    def create_select_menu(self) -> Select:
+        """Создает Select с динамическим placeholder"""
+        placeholder = (
+            f"Вы выбрали: {self.selected_dino}"
+            if self.selected_dino
+            else "Выберите динозавра"
+        )
+        return Select(
+            placeholder=placeholder,
+            options=[discord.SelectOption(label=dino) for dino in self.dinosaurs],
+            custom_id="select_dino"
+        )
+
+    @property
+    def embed(self) -> Embed:
+        """Создает embed с правилами активации динозавра"""
         embed = discord.Embed(
             title="🦖 Моя коллекция динозавров 🦕",
-            description="*Выберите динозавра для активации из списка ниже*",
+            description="*Перед активацией динозавра, пожалуйста, ознакомьтесь с правилами ниже:*",
             color=discord.Color.dark_green()
         )
 
+        rules = (
+            "1️⃣ **Находитесь на сервере во время активации.**\n"
+            "2️⃣ **В игре выберите нужного динозавра и появитесь на острове.**\n"
+            "3️⃣ **Переместитесь в безопасное место.**\n"
+            "4️⃣ **Нажмите кнопку активации.**\n"
+            "5️⃣ **После активации:**\n"
+            "       • В течение 2 минут запрещено нападать на других игроков.\n"
+            "       • Рост динозавра будет изменён.\n"
+            "       • Все мутации будут сброшены."
+        )
+
         embed.add_field(
-            name="📊 Статистика коллекции",
-            value="```\n"
-                  f"• Всего динозавров: {len(self.dinosaurs)}\n"
-                  f"• Выбран: {self.selected_dino or 'нет'}\n"
-                  "```",
-            inline=True
+            name="📋 Правила активации",
+            value=rules,
+            inline=False
         )
 
         embed.set_footer(
-            text="ℹ️ Выберите динозавра из меню и нажмите 'Активировать'",
+            text="ℹ️ Следуйте правилам для успешной активации динозавра",
             icon_url="https://emojicdn.elk.sh/ℹ️"
         )
 
@@ -72,12 +89,18 @@ class DinosaurSelectView(View):
         return embed
 
     async def update_view(self, interaction: discord.Interaction):
-        """Обновляет состояние кнопок и embed"""
-        self.embed = self.create_dinosaur_embed()
+        """Обновляет состояние кнопок, embed и Select"""
         self.activate_button.disabled = self.selected_dino is None
+
+        # Удаляем старый Select и добавляем новый с обновленным placeholder
+        self.remove_item(self.select_menu)
+        self.select_menu = self.create_select_menu()
+        self.add_item(self.select_menu)
+
         await interaction.response.edit_message(embed=self.embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        interaction.response: discord.InteractionResponse
         custom_id = interaction.data["custom_id"]
 
         if custom_id == "go_back":
@@ -94,10 +117,10 @@ class DinosaurSelectView(View):
         elif custom_id == "activate_dino":
             if self.selected_dino:
                 # TODO: Активировать динозавра
-                await interaction.response.send_message(
-                    f"Динозавр {self.selected_dino} успешно активирован!",
-                    ephemeral=True
+                await interaction.response.edit_message(embed=None, view=None,
+                    content=f"Динозавр {self.selected_dino} успешно активирован!",
                 )
+
             else:
                 await interaction.response.send_message(
                     "Сначала выберите динозавра!",

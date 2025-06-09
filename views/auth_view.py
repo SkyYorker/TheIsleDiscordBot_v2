@@ -30,8 +30,8 @@ class AuthView(View):
             return
 
         steam_data = await self.get_steam_data(interaction.user.id)
-        await interaction.response.send_message(embed=self.create_user_embed(steam_data, interaction.user.id),
-                                                view=MainMenuView(),
+        view = MainMenuView(steam_data, interaction.user.id)
+        await interaction.response.send_message(embed=view.embed, view=view,
                                                 ephemeral=True)
 
     async def check_steam_link(self, user_id: int) -> bool:
@@ -47,19 +47,3 @@ class AuthView(View):
             "avatar": player.get("avatarfull", ""),
             "steamid": steam_id
         }
-
-    def create_user_embed(self, data: dict, user_id: int) -> discord.Embed:
-        embed = discord.Embed(
-            title="🔹 Профиль",
-            description=(
-                f"💬 **DiscordID:** `{user_id}`\n"
-                f"👤 **Steam Никнейм:** `{data.get('username', 'Неизвестно')}`\n"
-                f"🆔 **SteamID:** `{data.get('steamid', 'Неизвестно')}`\n"
-                f"🌐 [Открыть профиль Steam](https://steamcommunity.com/profiles/{data.get('steamid', '')})"
-            ),
-            color=discord.Color.green()
-        )
-        embed.set_thumbnail(url=data.get("avatar"))
-
-        embed.set_footer(text="🔗 Используйте кнопки ниже для управления профилем")
-        return embed

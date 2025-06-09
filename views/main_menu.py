@@ -5,14 +5,25 @@ from views.dinosaurs import DinosaurSelectView
 
 
 class MainMenuView(View):
-    def __init__(self):
+    def __init__(self, steam_data: dict, user_id: int):
         super().__init__(timeout=180)
+
+        self.steam_data = steam_data
+        self.user_id = user_id
 
         self.add_item(Button(
             label="Пополнить баланс",
             style=discord.ButtonStyle.green,
             emoji="💵",
             url="https://example.com/deposit",
+            row=0
+        ))
+
+        self.add_item(Button(
+            label="Магазинчик",
+            style=discord.ButtonStyle.green,
+            emoji="🛒",
+            custom_id="shop",
             row=0
         ))
 
@@ -54,6 +65,25 @@ class MainMenuView(View):
             custom_id="close",
             row=3
         ))
+
+    @property
+    def embed(self) -> discord.Embed:
+        """Создает и возвращает embed с текущими данными"""
+        embed = discord.Embed(
+            title="🔹 Профиль",
+            description=(
+                f"💬 **DiscordID:** `{self.user_id}`\n"
+                f"👤 **Steam Никнейм:** `{self.steam_data.get('username', 'Неизвестно')}`\n"
+                f"🆔 **SteamID:** `{self.steam_data.get('steamid', 'Неизвестно')}`\n"
+                f"🌐 [Открыть профиль Steam](https://steamcommunity.com/profiles/{self.steam_data.get('steamid', '')})"
+            ),
+            color=discord.Color.green(),
+            image="https://media.discordapp.net/attachments/1376971745621315726/1380547758200717394/ChatGPT_Image_6_._2025_._17_03_38.png?ex=6847928a&is=6846410a&hm=74722d1a946cebd70c1dc426f37d9e527f29e121a6f400985bb5d776418fa6af&=&format=webp&quality=lossless&width=1240&height=826"
+        )
+        embed.set_thumbnail(url=self.steam_data.get("avatar"))
+        embed.set_footer(text="🔗 Используйте кнопки ниже для управления профилем")
+        return embed
+
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         custom_id = interaction.data["custom_id"]

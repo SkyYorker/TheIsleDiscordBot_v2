@@ -1,7 +1,9 @@
 import discord
 from discord.ui import View, Button
 
-from views.dinosaurs import DinosaurSelectView
+from views.save_dino import SaveDinoView
+from views.dinosaurs import DinosaurSelectView, DinosaurDeleteSelectView
+from views.dino_shop import DinoShopView
 
 
 class MainMenuView(View):
@@ -84,7 +86,6 @@ class MainMenuView(View):
         embed.set_footer(text="🔗 Используйте кнопки ниже для управления профилем")
         return embed
 
-
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         custom_id = interaction.data["custom_id"]
 
@@ -96,10 +97,14 @@ class MainMenuView(View):
             await interaction.response.edit_message(embed=view.embed, view=view)
 
         elif custom_id == "save_dino":
-            await interaction.response.send_message("Динозавр сохранён!", ephemeral=True)
+            view = SaveDinoView(self, interaction.message.embeds[0])
+            await interaction.response.edit_message(embed=view.embed, view=view)
 
         elif custom_id == "delete_dino":
-            await interaction.response.send_message("Динозавр удалён!", ephemeral=True)
+            example_dinosaurs = ["Тираннозавр", "Трицератопс", "Велоцираптор", "Стегозавр"]
+
+            view = DinosaurDeleteSelectView(interaction.message.embeds[0], self, example_dinosaurs)
+            await interaction.response.edit_message(embed=view.embed, view=view)
 
         elif custom_id == "logout":
             embed = discord.Embed(
@@ -108,9 +113,10 @@ class MainMenuView(View):
                 color=discord.Color.red()
             )
             await interaction.response.edit_message(embed=embed, view=None)
-
+        elif custom_id == "shop":
+            view = DinoShopView(interaction.message.embeds[0], self)
+            await interaction.response.edit_message(embed=view.embed, view=view)
         elif custom_id == "close":
             await interaction.response.defer()
             await interaction.delete_original_response()
-
         return False

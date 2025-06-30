@@ -1,6 +1,10 @@
 import discord
 from discord.ui import View, Button
 
+from utils.scripts import save_dino
+
+from data.dinosaurus import find_name_by_class, DINOSAURS
+
 class SaveDinoView(View):
     def __init__(self, main_menu_view: View, main_menu_embed: discord.Embed):
         super().__init__(timeout=180)
@@ -49,8 +53,7 @@ class SaveDinoView(View):
         rules = (
             "1️⃣ **Находитесь на сервере во время сохранения.**\n"
             "2️⃣ **Нажмите кнопку 'Начать сохранение'.**\n"
-            "3️⃣ **Выйдите с сервера, зажав кнопку 'H'.**\n"
-            "4️⃣ **Ждите уведомления от бота и не заходите на сервер.**"
+            "3️⃣ **Радуйтесь!**\n"
         )
         embed.add_field(
             name="📋 Инструкция по сохранению",
@@ -74,9 +77,37 @@ class SaveDinoView(View):
             await interaction.response.edit_message(embed=self.embed, view=self)
 
         elif custom_id == "start_save":
-            await interaction.response.edit_message(content="Сохранение динозавра начато!",
-                                                    view=None,
-                                                    embed=None)
+            result = await save_dino(interaction.user.id)
+            if not result or isinstance(result, tuple):
+                print(result)
+                print(type(result))
+                await interaction.response.edit_message(
+                    content=f"Ошибка: {result[1]}",
+                    view=None,
+                    embed=None
+                )
+                return True
+
+            dino_data = result
+            embed = discord.Embed(
+                title="✅ Динозавр успешно сохранён!",
+                color=discord.Color.green()
+            )
+            dino_name = find_name_by_class(dino_data["dino_class"])
+            dino_image = DINOSAURS.get(dino_name, {}).get("image")
+            embed.add_field(name="Вид", value=dino_name, inline=False)
+            embed.add_field(name="Рост", value=f"{dino_data['growth']}%", inline=True)
+            embed.add_field(name="Голод", value=f"{dino_data['hunger']}%", inline=True)
+            embed.add_field(name="Жажда", value=f"{dino_data['thirst']}%", inline=True)
+            embed.set_thumbnail(url="https://emojicdn.elk.sh/🦖")
+            embed.set_image(url=dino_image)
+            embed.set_footer(text="Вы всегда можете сохранить нового динозавра!")
+
+            await interaction.response.edit_message(
+                content=None,
+                embed=embed,
+                view=None
+            )
 
         elif custom_id == "back_to_menu":
             await interaction.response.edit_message(embed=self.main_menu_embed, view=self.main_menu_view)

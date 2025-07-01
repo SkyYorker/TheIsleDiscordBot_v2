@@ -1,6 +1,7 @@
 import os
 
 from database.crud import PlayerDinoCRUD
+from .api import slay_dino, restore_dino
 from .rcon_isle import fetch_player_by_id, PlayerData
 
 HOST = os.getenv("RCON_HOST")
@@ -81,3 +82,41 @@ async def get_current_dino(discord_id: int) -> PlayerData | tuple[None, str]:
         return None, "Игрок не на сервере"
 
     return isle_player
+
+
+async def kill_current_dino(discord_id: int):
+    player = await PlayerDinoCRUD.get_player_info(discord_id)
+    # TODO: Сделать ограничение на кол-во сохранений
+    if not player:
+        return None, "Нет привязки к Steam"
+
+    steam_id = player.get("player", {}).get("steam_id", "")
+    if not steam_id:
+        return None, "Нет привязки к Steam"
+    result = await slay_dino(steam_id)
+    if not isinstance(result, dict):
+        return None, "Неизвестная ошибка во время убийства динозавра"
+    if not result.get("success"):
+        return None, "Игрока нет на сервере"
+
+    return True
+
+
+async def restore_dino_script(discord_id: int, dino_id: int):
+    current_dino = await get_current_dino(discord_id)
+    if isinstance(current_dino, tuple):
+        return None, current_dino[1]
+    dino = await PlayerDinoCRUD.get_dino_by_id(dino_id)
+    if current_dino.dino_class != dino.dino_class:
+        return None, "Активируемый динозавр отличается от того, что выбран сейчас в игре"
+    if dino.steam_id != current_dino.player_id:
+        return None, "Этот динозавр Вам не принадлежит"
+    result = await restore_dino(current_dino.player_id,
+                                dino.growth, dino.hunger,
+                                dino.thirst, dino.health)
+    if not isinstance(result, dict):
+        return None, "Неизвестная ошибка во время убийства динозавра"
+    if not result.get("success"):
+        return None, "Игрока нет на сервере"
+
+    return True

@@ -18,10 +18,10 @@ async def run_enter():
 
 async def restore_dino(
         steamid: str,
-        growth: float,
-        hunger: float,
-        thirst: float,
-        health: float
+        growth: int,
+        hunger: int,
+        thirst: int,
+        health: int
 ):
     data = {
         "steamid": steamid,

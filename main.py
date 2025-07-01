@@ -5,9 +5,10 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+load_dotenv()
+
 from database.crud import init_models
 
-load_dotenv()
 from views.auth_view import AuthView
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())

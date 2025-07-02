@@ -1,6 +1,6 @@
 import os
 
-from database.crud import PlayerDinoCRUD
+from database.crud import PlayerDinoCRUD, PendingDinoCRUD
 from .api import slay_dino, restore_dino
 from .rcon_isle import fetch_player_by_id, PlayerData
 
@@ -35,6 +35,26 @@ async def save_dino(discord_id: int):
         return None, "Техническая ошибка. Обратитесь к администратору"
 
     return result
+
+
+async def save_dino_new(discord_id: int, callback_url: str):
+    player = await PlayerDinoCRUD.get_player_info(discord_id)
+    # TODO: Сделать ограничение на кол-во сохранений
+    if not player:
+        return None, "Нет привязки к Steam"
+
+    steam_id = player.get("player", {}).get("steam_id", "")
+    if not steam_id:
+        return None, "Нет привязки к Steam"
+
+    isle_player = await fetch_player_by_id(HOST, PORT, PASSWORD, steam_id)
+    if not isle_player:
+        return None, "Игрок не на сервере"
+
+    await PendingDinoCRUD.add_pending_dino(steam_id, discord_id, callback_url)
+
+    return True
+
 
 async def buy_dino(discord_id: int, dino_class, growth, hunger, thirst, health):
     player = await PlayerDinoCRUD.get_player_info(discord_id)

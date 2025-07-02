@@ -43,3 +43,20 @@ class DinoStorage(Base):
     )
 
     player: Mapped["Players"] = relationship("Players", back_populates="dinos")
+
+class PendingDinoStorage(Base):
+    __tablename__ = "pending_dino_storage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    steam_id: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    discord_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.now(UTC), nullable=False
+    )
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+
+    def __repr__(self):
+        return (
+            f"<PendingDinoStorage(id={self.id}, steam_id={self.steam_id}, "
+            f"discord_id={self.discord_id}, created_at={self.created_at}, url={self.url})>"
+        )

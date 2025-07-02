@@ -1,7 +1,7 @@
 import discord
 from discord.ui import View, Button
 
-from utils.scripts import save_dino, save_dino_new
+from utils.scripts import save_dino, pending_save_dino
 
 from data.dinosaurus import find_name_by_class, DINOSAURS
 
@@ -79,7 +79,7 @@ class SaveDinoView(View):
         elif custom_id == "start_save":
             callback_url = (f"https://discord.com/api/v10/webhooks/{interaction.application_id}"
                             f"/{interaction.token}/messages/@original")
-            result = await save_dino_new(interaction.user.id, callback_url)
+            result = await pending_save_dino(interaction.user.id, callback_url)
             if not result or isinstance(result, tuple):
                 await interaction.response.edit_message(
                     content=f"Ошибка: {result[1]}",

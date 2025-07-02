@@ -26,13 +26,30 @@ async def save_dino(discord_id: int):
     result = await PlayerDinoCRUD.add_dino(
         steam_id,
         isle_player.dino_class,
-        int(isle_player.growth * 100),
+        min(int(isle_player.growth * 100), 99),
         int(isle_player.hunger * 100),
         int(isle_player.thirst * 100),
         int(isle_player.health * 100)
     )
     if not result:
         return None, "Техническая ошибка. Обратитесь к администратору"
+
+    return result
+
+async def buy_dino(discord_id: int, dino_class, growth, hunger, thirst, health):
+    player = await PlayerDinoCRUD.get_player_info(discord_id)
+    # TODO: Сделать ограничение на кол-во сохранений
+    if not player:
+        return None, "Нет привязки к Steam"
+
+    steam_id = player.get("player", {}).get("steam_id", "")
+    if not steam_id:
+        return None, "Нет привязки к Steam"
+
+    result = await PlayerDinoCRUD.add_dino(steam_id, dino_class, growth, hunger, thirst, health)
+
+    if not result:
+        return None, "Игрок не найден"
 
     return result
 
@@ -115,8 +132,13 @@ async def restore_dino_script(discord_id: int, dino_id: int):
                                 dino.growth, dino.hunger,
                                 dino.thirst, dino.health)
     if not isinstance(result, dict):
-        return None, "Неизвестная ошибка во время убийства динозавра"
+        return None, "Неизвестная ошибка во время восстановления динозавра"
     if not result.get("success"):
         return None, "Игрока нет на сервере"
+
+    result = await del_dino(discord_id, dino_id)
+
+    if isinstance(result, tuple):
+        return None, result[1]
 
     return True

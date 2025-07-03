@@ -1,11 +1,21 @@
 import asyncio
+import logging
 import os
 import re
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from utils.discord_api import edit_ephemeral_message, send_dm
 from utils.scripts import save_dino_to_db, get_pending_dino
+
+BOT_TOKEN = os.getenv("DISCORD_TOKEN")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 class LogFileHandler(FileSystemEventHandler):
@@ -32,7 +42,7 @@ class LogFileHandler(FileSystemEventHandler):
         current_size = self._get_file_size()
 
         if current_size < self.last_size:
-            print("Файл был сброшен, начинаем чтение с начала.")
+            logger.info("Файл был сброшен, начинаем чтение с начала.")
             self.position = 0
 
         self.last_size = current_size
@@ -49,7 +59,7 @@ class LogFileHandler(FileSystemEventHandler):
 
 async def process_line(line):
     if "Left The Server whilebeing safelogged" not in line:
-        return
+        return None
 
     # Пример строки:
     # [15:52][LogTheIsleJoinData]: DayBot [76561199671085032] Left The Server whilebeing safelogged, Was playing as: Diabloceratops, Gender: Male, Growth: 0.281349
@@ -62,7 +72,7 @@ async def process_line(line):
     growth = float(growth_match.group(1)) if growth_match else None
 
     if not steamid or not dino_type or not growth:
-        return
+        return None
 
     dino = await get_pending_dino(steamid)
 
@@ -70,9 +80,12 @@ async def process_line(line):
         return None, dino[1]
 
     await save_dino_to_db(steamid, dino_type, growth)
-    # TODO: Отправить уведомление в ДС об успешной
 
-    print(f"SteamID: {steamid}, Dino: {dino_type}, Growth: {growth}")
+    await edit_ephemeral_message(BOT_TOKEN, dino.get("url", ""), "Активация успешна")
+    await send_dm(BOT_TOKEN, dino.get("discord_id", ""), "Ваш динозавр успешно активирован")
+
+    logger.info(f"SteamID: {steamid}, Dino: {dino_type}, Growth: {growth}")
+    return None
 
 
 def main():

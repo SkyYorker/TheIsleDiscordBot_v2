@@ -83,7 +83,11 @@ async def process_line(line):
     if isinstance(dino, tuple):
         return None, dino[1]
 
-    await save_dino_to_db(steamid, dino_type, growth)
+    result = await save_dino_to_db(steamid, dino_type, growth)
+
+    if isinstance(result, tuple):
+        logger.warning(f"Ошибка при сохранении динозавра в БД: {result[1]}")
+        return
 
     await edit_ephemeral_message(BOT_TOKEN, dino.get("url", ""), "Активация успешна")
     await send_dm(BOT_TOKEN, dino.get("discord_id", ""), "Ваш динозавр успешно активирован")

@@ -1,7 +1,7 @@
 import os
 
 from database.crud import PlayerDinoCRUD, PendingDinoCRUD
-from .api import slay_dino, restore_dino
+from .clicker_api import slay_dino, restore_dino
 from .rcon_isle import fetch_player_by_id, PlayerData
 
 HOST = os.getenv("RCON_HOST")

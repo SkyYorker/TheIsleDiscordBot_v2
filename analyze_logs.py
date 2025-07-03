@@ -3,6 +3,10 @@ import logging
 import os
 import re
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 

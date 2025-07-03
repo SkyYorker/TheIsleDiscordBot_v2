@@ -75,26 +75,50 @@ async def process_line(line):
     dino_type = dino_match.group(1) if dino_match else None
     growth = float(growth_match.group(1)) if growth_match else None
 
+    logger.debug(f"Результаты парсинга: steamid={steamid}, dino_type={dino_type}, growth={growth}")
+
     if not steamid or not dino_type or not growth:
+        logger.warning(
+            f"Не удалось распарсить необходимые данные из строки: steamid={steamid}, dino_type={dino_type}, growth={growth}"
+        )
         return None
 
-    dino = await get_pending_dino(steamid)
+    try:
+        logger.info(f"Пробуем получить pending_dino для steamid={steamid}")
+        dino = await get_pending_dino(steamid)
+    except Exception as e:
+        logger.error(f"Ошибка при получении pending_dino для steamid={steamid}: {e}", exc_info=True)
+        return None
 
     if isinstance(dino, tuple):
-        return None, dino[1]
+        logger.warning(f"Ошибка при получении pending_dino: {dino[1]}")
+        return None
 
-    result = await save_dino_to_db(steamid, dino_type, growth)
+    try:
+        logger.info(f"Пробуем сохранить динозавра в БД: steamid={steamid}, dino_type={dino_type}, growth={growth}")
+        result = await save_dino_to_db(steamid, dino_type, growth)
+    except Exception as e:
+        logger.error(f"Ошибка при сохранении динозавра в БД: {e}", exc_info=True)
+        return None
 
     if isinstance(result, tuple):
         logger.warning(f"Ошибка при сохранении динозавра в БД: {result[1]}")
-        return
+        return None
 
-    await edit_ephemeral_message(BOT_TOKEN, dino.get("url", ""), "Активация успешна")
-    await send_dm(BOT_TOKEN, dino.get("discord_id", ""), "Ваш динозавр успешно активирован")
+    try:
+        logger.info(f"Пробуем отредактировать эфемерное сообщение для discord_id={dino.get('discord_id')}, url={dino.get('url')}")
+        await edit_ephemeral_message(BOT_TOKEN, dino.get("url", ""), "Активация успешна")
+    except Exception as e:
+        logger.error(f"Ошибка при редактировании эфемерного сообщения: {e}", exc_info=True)
 
-    logger.info(f"SteamID: {steamid}, Dino: {dino_type}, Growth: {growth}")
+    try:
+        logger.info(f"Пробуем отправить ЛС пользователю discord_id={dino.get('discord_id')}")
+        await send_dm(BOT_TOKEN, dino.get("discord_id", ""), "Ваш динозавр успешно активирован")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке ЛС: {e}", exc_info=True)
+
+    logger.info(f"Успешно обработана строка: SteamID={steamid}, Dino={dino_type}, Growth={growth}")
     return None
-
 
 def main():
     log_path = r"C:\Servers\servers\2\serverfiles\TheIsle\Saved\Logs\TheIsle-Shipping.log"

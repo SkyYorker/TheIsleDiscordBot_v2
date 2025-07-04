@@ -58,9 +58,9 @@ async def save_dino_to_db(steam_id: str, dino_class: str, growth: float):
         steam_id,
         current_dino["dino_class"],
         min(int(current_dino["growth"] * 100), 99),
-        int(current_dino["thirst"] * 100),
-        int(current_dino["hunger"] * 100),
-        int(current_dino["health"] * 100)
+        int(current_dino["thirst"]),
+        int(current_dino["hunger"]),
+        int(current_dino["health"])
     )
     if not result:
         return None, "Техническая ошибка. Обратитесь к администратору"

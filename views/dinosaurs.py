@@ -132,12 +132,14 @@ class DinosaurSelectView(View):
         options = []
         saved_dino_class = ""
         for dino in self.dinosaurs[:25]:
+            dino_name = find_name_by_class(dino["dino_class"])
+            if DINOSAURS[dino_name]["category"] != self.selected_category:
+                continue
             id = dino["id"]
             growth = dino["growth"]
             hunger = dino["hunger"]
             thirst = dino["thirst"]
             health = dino["health"]
-            dino_name = find_name_by_class(dino["dino_class"])
             if str(id) == self.selected_dino:
                 saved_dino_class = dino_name
             label = f"({id}) {dino_name} (Рост {growth}, Голод: {hunger}, Жажда: {thirst}, HP: {health})"

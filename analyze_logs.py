@@ -91,6 +91,7 @@ async def del_dino_saves(steamid: str):
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
+                logger.info(f"Сохранение {file_path} удалено успешно")
             except Exception as e:
                 logger.error(f"Ошибка при удалении сохранения {filename} : {e}")
         else:

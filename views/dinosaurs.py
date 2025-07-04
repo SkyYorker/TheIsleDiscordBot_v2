@@ -426,12 +426,19 @@ class DinosaurDeleteSelectView(View):
             if self.selected_dino:
                 result = await del_dino(interaction.user.id, int(self.selected_dino))
                 if not result or isinstance(result, tuple):
-                    await interaction.response.edit_message(
-                        embed=None,
-                        view=None,
-                        content=f"Ошибка: {result[1]}!"
+                    reason = result[1] if isinstance(result, tuple) and len(
+                        result) > 1 else "Не удалось удалить сохраненного динозавра."
+                    embed = discord.Embed(
+                        title="❌ Ошибка удаления",
+                        description=reason,
+                        color=discord.Color.red()
                     )
-                    return
+                    await interaction.followup.edit_message(
+                        interaction.message.id,
+                        embed=embed,
+                        view=None,
+                        content=None
+                    )
                 await interaction.response.edit_message(
                     embed=None,
                     view=None,

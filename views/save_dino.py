@@ -46,6 +46,7 @@ class SaveDinoView(View):
         self.add_item(self.close_button)
 
     async def start_save_timeout(self, interaction: discord.Interaction):
+        await asyncio.sleep(120)
         if "успешно активирован" in interaction.message.content:
             return
 

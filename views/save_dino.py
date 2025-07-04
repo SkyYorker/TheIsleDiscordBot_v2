@@ -47,7 +47,7 @@ class SaveDinoView(View):
 
     async def start_save_timeout(self, interaction: discord.Interaction):
         await asyncio.sleep(120)
-        if "успешно сохранен" in interaction.message.content:
+        if "Динозавр сохранен" in interaction.message.embeds[0].title:
             return
 
         await del_pending_dino_by_discordid(interaction.user.id)

@@ -51,9 +51,11 @@ class SaveDinoView(View):
             return
 
         await del_pending_dino_by_discordid(interaction.user.id)
-        await interaction.followup.send(
+        await interaction.response.edit_message(
             content="⏰ Время на сохранение истекло!",
-            ephemeral=True
+            ephemeral=True,
+            view=None,
+            embeds=None
         )
 
     @property
@@ -121,7 +123,7 @@ class SaveDinoView(View):
             )
 
             embed.add_field(
-                name="⏳ Для отмены сохранения осталось...",
+                name="⏳ До отмены сохранения осталось...",
                 value=f"<t:{int(two_minutes_later.timestamp())}:R>",
                 inline=False
             )

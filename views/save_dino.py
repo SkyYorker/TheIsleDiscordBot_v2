@@ -53,7 +53,6 @@ class SaveDinoView(View):
         await del_pending_dino_by_discordid(interaction.user.id)
         await interaction.response.edit_message(
             content="⏰ Время на сохранение истекло!",
-            ephemeral=True,
             view=None,
             embeds=None
         )

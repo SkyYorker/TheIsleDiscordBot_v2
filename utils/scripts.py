@@ -180,8 +180,6 @@ async def restore_dino_script(discord_id: int, dino_id: int) -> Tuple[Optional[b
                                                            dict) else "Неизвестная ошибка во время восстановления динозавра"
 
     delete_result = await del_dino(discord_id, dino_id)
-    if isinstance(delete_result, tuple):
-        return None, delete_result[1]
 
     await send_dm_message(HOST, PORT, PASSWORD, current_dino.player_id, "Ваш динозавр успешно активирован")
     return True

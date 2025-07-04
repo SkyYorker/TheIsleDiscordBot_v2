@@ -14,6 +14,54 @@ async def init_models():
         await conn.run_sync(Base.metadata.create_all)
 
 
+class DonationCRUD:
+    @staticmethod
+    async def get_tk(discord_id: int) -> Optional[int]:
+        async with async_session_maker() as session:
+            player = await session.scalar(
+                select(Players).where(Players.discord_id == discord_id)
+            )
+            if not player:
+                return None
+            return player.tk
+
+    @staticmethod
+    async def add_tk(discord_id: int, amount: int) -> Optional[Dict[str, Any]]:
+        async with async_session_maker() as session:
+            player = await session.scalar(
+                select(Players).where(Players.discord_id == discord_id)
+            )
+            if not player:
+                return None
+            player.tk += amount
+            await session.commit()
+            await session.refresh(player)
+            return {
+                "discord_id": player.discord_id,
+                "steam_id": player.steam_id,
+                "tk": player.tk,
+                "registry_date": player.registry_date,
+            }
+
+    @staticmethod
+    async def remove_tk(discord_id: int, amount: int) -> Optional[Dict[str, Any]]:
+        async with async_session_maker() as session:
+            player = await session.scalar(
+                select(Players).where(Players.discord_id == discord_id)
+            )
+            if not player:
+                return None
+            player.tk = max(0, player.tk - amount)
+            await session.commit()
+            await session.refresh(player)
+            return {
+                "discord_id": player.discord_id,
+                "steam_id": player.steam_id,
+                "tk": player.tk,
+                "registry_date": player.registry_date,
+            }
+
+
 class PlayerDinoCRUD:
     @staticmethod
     async def add_player(

@@ -430,7 +430,6 @@ class DinosaurDeleteSelectView(View):
                         color=discord.Color.red()
                     )
                     await interaction.response.edit_message(
-                        interaction.message.id,
                         embed=embed,
                         view=None,
                         content=None

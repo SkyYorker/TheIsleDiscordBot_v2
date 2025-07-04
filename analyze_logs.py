@@ -85,6 +85,7 @@ def parse_log_line(line):
     return steamid, dino_type, growth
 
 async def del_dino_saves(steamid: str):
+    await asyncio.sleep(1)
     saves = [f"{steamid}.sav", f"{steamid}.sav.bak"]
     for filename in saves:
         file_path = os.path.join(SAVE_FOLDER, filename)

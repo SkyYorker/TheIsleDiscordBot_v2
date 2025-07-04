@@ -2,7 +2,7 @@ import os
 
 from database.crud import PlayerDinoCRUD, PendingDinoCRUD
 from .clicker_api import slay_dino, restore_dino
-from .rcon_isle import fetch_player_by_id, PlayerData
+from .rcon_isle import fetch_player_by_id, PlayerData, send_dm_message
 
 HOST = os.getenv("RCON_HOST")
 PORT = int(os.getenv("RCON_PORT"))
@@ -206,5 +206,7 @@ async def restore_dino_script(discord_id: int, dino_id: int):
 
     if isinstance(result, tuple):
         return None, result[1]
+
+    await send_dm_message(HOST, PORT, PASSWORD, current_dino.player_id, "Ваш динозавр успешно активирован")
 
     return True

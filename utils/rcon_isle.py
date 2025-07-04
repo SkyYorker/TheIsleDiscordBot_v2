@@ -95,3 +95,26 @@ async def fetch_player_by_id(rcon_host: str, rcon_port: int, rcon_password: str,
     PlayerData]:
     all_players = await fetch_all_players(rcon_host, rcon_port, rcon_password)
     return find_player_by_id(all_players, player_id)
+
+
+async def send_dm_message(rcon_host: str, rcon_port: int, rcon_password: str, player_id: str, content="test"):
+    player = await fetch_player_by_id(rcon_host, rcon_port, rcon_password, player_id)
+    if not player:
+        return
+    rcon = EvrimaRCON(rcon_host, rcon_port, rcon_password)
+    await rcon.connect()
+    formatted_message = f"{player_id},{content}"
+    response = await rcon.send_command(b"\x02" + b"\x11," + formatted_message.encode() + b"\x00")
+    return response
+
+
+async def rcon_ban(rcon_host: str, rcon_port: int, rcon_password: str, player_id: str, duration: int,
+                   reason="Отсутствует"):
+    player = await fetch_player_by_id(rcon_host, rcon_port, rcon_password, player_id)
+    if not player:
+        return
+    rcon = EvrimaRCON(rcon_host, rcon_port, rcon_password)
+    await rcon.connect()
+    formatted_message = f"{player_id}"
+    response = await rcon.send_command(b"\x02" + b"\x20" + formatted_message.encode() + b"\x00")
+    return response

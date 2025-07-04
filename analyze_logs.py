@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import time
 
 from dotenv import load_dotenv
 
@@ -43,22 +44,28 @@ class LogFileHandler(FileSystemEventHandler):
         if event.src_path != self.file_path:
             return
 
-        current_size = self._get_file_size()
+        try:
+            current_size = self._get_file_size()
 
-        if current_size < self.last_size:
-            logger.info("Файл был сброшен, начинаем чтение с начала.")
-            self.position = 0
+            if current_size < self.last_size:
+                logger.info("Файл был сброшен, начинаем чтение с начала.")
+                self.position = 0
 
-        self.last_size = current_size
+            self.last_size = current_size
 
-        with open(self.file_path, "r", encoding="utf-8") as f:
-            f.seek(self.position)
-            while True:
-                line = f.readline()
-                if not line:
-                    break
-                asyncio.run_coroutine_threadsafe(self.callback(line.strip()), self.loop)
-            self.position = f.tell()
+            with open(self.file_path, "r", encoding="utf-8") as f:
+                f.seek(self.position)
+                while True:
+                    line = f.readline()
+                    if not line:
+                        break
+                    asyncio.run_coroutine_threadsafe(self.callback(line.strip()), self.loop)
+                self.position = f.tell()
+        except PermissionError as e:
+            logger.error(f"Доступ к файлу запрещен: {e}")
+            time.sleep(1)
+        except Exception as e:
+            logger.error(f"Неизвестная ошибка при чтении файла: {e}")
 
 
 async def process_line(line):

@@ -435,7 +435,7 @@ class DinosaurDeleteSelectView(View):
                         view=None,
                         content=None
                     )
-                await interaction.response.edit_message(
+                await interaction.followup.edit_message(
                     embed=None,
                     view=None,
                     content=f"Динозавр {self.selected_dino} успешно удалён из сохранённых!"

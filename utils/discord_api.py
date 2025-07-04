@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-async def edit_ephemeral_message(bot_token: str, url: str, new_content: str) -> bool:
+async def edit_ephemeral_message(bot_token: str, url: str, new_content: str, embeds = []) -> bool:
     headers = {
         "Authorization": f"Bot {bot_token}",
         "Content-Type": "application/json"
@@ -11,7 +11,7 @@ async def edit_ephemeral_message(bot_token: str, url: str, new_content: str) -> 
     payload = {
         "content": new_content,
         "flags": 64,
-        "embeds": []
+        "embeds": embeds
     }
 
     try:
@@ -32,7 +32,7 @@ async def edit_ephemeral_message(bot_token: str, url: str, new_content: str) -> 
         return False
 
 
-async def send_dm(bot_token: str, user_id: str, message: str) -> bool:
+async def send_dm(bot_token: str, user_id: str, message: str, embeds = []) -> bool:
     create_dm_url = "https://discord.com/api/v10/users/@me/channels"
     headers = {
         "Authorization": f"Bot {bot_token}",
@@ -58,7 +58,7 @@ async def send_dm(bot_token: str, user_id: str, message: str) -> bool:
                     return False
 
             send_message_url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
-            message_payload = {"content": message}
+            message_payload = {"content": message, "embeds": embeds}
 
             async with session.post(send_message_url, headers=headers, json=message_payload) as response:
                 if response.status == 200:

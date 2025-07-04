@@ -34,12 +34,6 @@ class DinosaurSelectView(View):
         if not self.dinosaurs:
             self.state = "empty"
             self.add_item(Button(
-                label="Назад",
-                style=discord.ButtonStyle.red,
-                custom_id="go_back",
-                row=0
-            ))
-            self.add_item(Button(
                 label="В главное меню",
                 style=discord.ButtonStyle.grey,
                 custom_id="go_main_menu",

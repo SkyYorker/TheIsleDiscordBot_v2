@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Tuple, Union, List, Dict, Any
 
 from database.crud import PlayerDinoCRUD, PendingDinoCRUD
 from .clicker_api import slay_dino, restore_dino
@@ -9,9 +10,8 @@ PORT = int(os.getenv("RCON_PORT"))
 PASSWORD = os.getenv("RCON_PASSWORD")
 
 
-async def save_dino(discord_id: int):
+async def _get_player_data(discord_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
     if not player:
         return None, "Нет привязки к Steam"
 
@@ -19,9 +19,24 @@ async def save_dino(discord_id: int):
     if not steam_id:
         return None, "Нет привязки к Steam"
 
+    return player, steam_id
+
+
+async def _get_isle_player(steam_id: str) -> Tuple[Optional[PlayerData], Optional[str]]:
     isle_player = await fetch_player_by_id(HOST, PORT, PASSWORD, steam_id)
     if not isle_player:
         return None, "Игрок не на сервере"
+    return isle_player, None
+
+
+async def save_dino(discord_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    player, steam_id = await _get_player_data(discord_id)
+    if not player:
+        return None, steam_id
+
+    isle_player, error = await _get_isle_player(steam_id)
+    if error:
+        return None, error
 
     result = await PlayerDinoCRUD.add_dino(
         steam_id,
@@ -31,22 +46,20 @@ async def save_dino(discord_id: int):
         int(isle_player.thirst * 100),
         int(isle_player.health * 100)
     )
-    if not result:
-        return None, "Техническая ошибка. Обратитесь к администратору"
-
-    return result
+    return result if result else (None, "Техническая ошибка. Обратитесь к администратору")
 
 
-async def get_pending_dino(steam_id: str):
-    pending_dino = await PendingDinoCRUD.get_by_steam_id(steam_id)
-    if not pending_dino or len(pending_dino) == 0:
+async def get_pending_dino(steam_id: str) -> Union[Dict[str, Any], Tuple[None, str]]:
+    pending_dinos = await PendingDinoCRUD.get_by_steam_id(steam_id)
+    if not pending_dinos:
         return None, "Динозавр для сохранения не найден"
-    if len(pending_dino) > 1:
+    if len(pending_dinos) > 1:
         return None, "Запущено несколько процессов сохранения динозавров"
-    return pending_dino[0]
+    return pending_dinos[0]
 
 
-async def save_dino_to_db(steam_id: str, dino_class: str, growth: float):
+async def save_dino_to_db(steam_id: str, dino_class: str, growth: float) -> Tuple[
+    Optional[Dict[str, Any]], Optional[str]]:
     current_dino = await get_pending_dino(steam_id)
     if isinstance(current_dino, tuple):
         return current_dino
@@ -62,151 +75,113 @@ async def save_dino_to_db(steam_id: str, dino_class: str, growth: float):
         int(current_dino["hunger"]),
         int(current_dino["health"])
     )
-    if not result:
-        return None, "Техническая ошибка. Обратитесь к администратору"
-
-    return result
+    return result if result else (None, "Техническая ошибка. Обратитесь к администратору")
 
 
-async def del_pending_dino_by_steamid(steam_id: str):
+async def del_pending_dino_by_steamid(steam_id: str) -> int:
     return await PendingDinoCRUD.delete_by_steam_id(steam_id)
 
 
-async def del_pending_dino_by_discordid(discord_id: int):
+async def del_pending_dino_by_discordid(discord_id: int) -> int:
     return await PendingDinoCRUD.delete_by_discord_id(discord_id)
 
 
-async def pending_save_dino(discord_id: int, callback_url: str):
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def pending_save_dino(discord_id: int, callback_url: str) -> Tuple[Optional[bool], Optional[str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
+        return None, steam_id
 
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
-
-    isle_player = await fetch_player_by_id(HOST, PORT, PASSWORD, steam_id)
-    if not isle_player:
-        return None, "Игрок не на сервере"
+    isle_player, error = await _get_isle_player(steam_id)
+    if error:
+        return None, error
 
     await PendingDinoCRUD.cleanup_old_entries(2)
 
-    await PendingDinoCRUD.add_pending_dino(steam_id, discord_id, callback_url,
-                                           isle_player.dino_class,
-                                           min(int(isle_player.growth * 100), 99),
-                                           int(isle_player.hunger * 100),
-                                           int(isle_player.thirst * 100),
-                                           int(isle_player.health * 100))
-
+    await PendingDinoCRUD.add_pending_dino(
+        steam_id, discord_id, callback_url,
+        isle_player.dino_class,
+        min(int(isle_player.growth * 100), 99),
+        int(isle_player.hunger * 100),
+        int(isle_player.thirst * 100),
+        int(isle_player.health * 100)
+    )
     return True
 
 
-async def buy_dino(discord_id: int, dino_class, growth, hunger, thirst, health):
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def buy_dino(discord_id: int, dino_class: str, growth: int, hunger: int, thirst: int, health: int) -> Tuple[
+    Optional[Dict[str, Any]], Optional[str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
-
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
+        return None, steam_id
 
     result = await PlayerDinoCRUD.add_dino(steam_id, dino_class, growth, hunger, thirst, health)
-
-    if not result:
-        return None, "Игрок не найден"
-
-    return result
+    return result if result else (None, "Игрок не найден")
 
 
-async def get_all_dinos(discord_id: int) -> list | tuple[None, str]:
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def get_all_dinos(discord_id: int) -> Union[List[Dict[str, Any]], Tuple[None, str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
-
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
-
+        return None, steam_id
     return player.get("dinos", [])
 
 
-async def del_dino(discord_id: int, dino_id: int):
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def del_dino(discord_id: int, dino_id: int) -> Tuple[Optional[bool], Optional[str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
-
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
+        return None, steam_id
 
     result = await PlayerDinoCRUD.delete_dino(steam_id, dino_id)
-    if not result:
-        return None, "Ошибка во время удаления динозавра"
-
-    return True
+    return (True, None) if result else (None, "Ошибка во время удаления динозавра")
 
 
-async def get_current_dino(discord_id: int) -> PlayerData | tuple[None, str]:
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def get_current_dino(discord_id: int) -> Union[PlayerData, Tuple[None, str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
+        return None, steam_id
 
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
-
-    isle_player = await fetch_player_by_id(HOST, PORT, PASSWORD, steam_id)
-    if not isle_player:
-        return None, "Игрок не на сервере"
-
-    return isle_player
+    isle_player, error = await _get_isle_player(steam_id)
+    return isle_player if isle_player else (None, error)
 
 
-async def kill_current_dino(discord_id: int):
-    player = await PlayerDinoCRUD.get_player_info(discord_id)
-    # TODO: Сделать ограничение на кол-во сохранений
+async def kill_current_dino(discord_id: int) -> Tuple[Optional[bool], Optional[str]]:
+    player, steam_id = await _get_player_data(discord_id)
     if not player:
-        return None, "Нет привязки к Steam"
+        return None, steam_id
 
-    steam_id = player.get("player", {}).get("steam_id", "")
-    if not steam_id:
-        return None, "Нет привязки к Steam"
     result = await slay_dino(steam_id)
-    if not isinstance(result, dict):
-        return None, "Неизвестная ошибка во время убийства динозавра"
-    if not result.get("success"):
-        return None, "Игрока нет на сервере"
-
+    if not isinstance(result, dict) or not result.get("success"):
+        return None, "Игрока нет на сервере" if isinstance(result,
+                                                           dict) else "Неизвестная ошибка во время убийства динозавра"
     return True
 
 
-async def restore_dino_script(discord_id: int, dino_id: int):
+async def restore_dino_script(discord_id: int, dino_id: int) -> Tuple[Optional[bool], Optional[str]]:
     current_dino = await get_current_dino(discord_id)
     if isinstance(current_dino, tuple):
         return None, current_dino[1]
+
     dino = await PlayerDinoCRUD.get_dino_by_id(dino_id)
+    if not dino:
+        return None, "Динозавр не найден"
+
     if current_dino.dino_class != dino.dino_class:
         return None, "Активируемый динозавр отличается от того, что выбран сейчас в игре"
     if dino.steam_id != current_dino.player_id:
         return None, "Этот динозавр Вам не принадлежит"
-    result = await restore_dino(current_dino.player_id,
-                                dino.growth, dino.hunger,
-                                dino.thirst, dino.health)
-    if not isinstance(result, dict):
-        return None, "Неизвестная ошибка во время восстановления динозавра"
-    if not result.get("success"):
-        return None, "Игрока нет на сервере"
 
-    result = await del_dino(discord_id, dino_id)
+    result = await restore_dino(
+        current_dino.player_id,
+        dino.growth, dino.hunger,
+        dino.thirst, dino.health
+    )
 
-    if isinstance(result, tuple):
-        return None, result[1]
+    if not isinstance(result, dict) or not result.get("success"):
+        return None, "Игрока нет на сервере" if isinstance(result,
+                                                           dict) else "Неизвестная ошибка во время восстановления динозавра"
+
+    delete_result = await del_dino(discord_id, dino_id)
+    if isinstance(delete_result, tuple):
+        return None, delete_result[1]
 
     await send_dm_message(HOST, PORT, PASSWORD, current_dino.player_id, "Ваш динозавр успешно активирован")
-
     return True

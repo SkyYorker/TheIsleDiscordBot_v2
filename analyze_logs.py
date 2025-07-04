@@ -83,7 +83,7 @@ def parse_log_line(line):
     return steamid, dino_type, growth
 
 
-async def activate_dino(steamid, dino_type, growth):
+async def save_dino(steamid, dino_type, growth):
     try:
         dino = await get_pending_dino(steamid)
     except Exception as e:
@@ -110,10 +110,10 @@ async def activate_dino(steamid, dino_type, growth):
     return dino, result, None
 
 
-def make_activation_embed(dino_type, growth):
+def make_saved_dino_embed(dino_type, growth):
     return {
-        "title": "Динозавр активирован!",
-        "description": f"Ваш динозавр **{dino_type}** был успешно активирован.",
+        "title": "Динозавр сохранен!",
+        "description": f"Ваш динозавр **{dino_type}** был успешно сохранен.",
         "color": 0x43B581,
         "fields": [
             {
@@ -128,13 +128,13 @@ def make_activation_embed(dino_type, growth):
             }
         ],
         "footer": {
-            "text": "Поздравляем с активацией!"
+            "text": "Поздравляем с сохранением!"
         }
     }
 
 
-async def send_activation_embeds(bot_token, dino, dino_type, growth):
-    embed = make_activation_embed(dino_type, growth)
+async def send_dino_saved_embeds(bot_token, dino, dino_type, growth):
+    embed = make_saved_dino_embed(dino_type, growth)
     try:
         await edit_ephemeral_message(
             bot_token,
@@ -161,11 +161,11 @@ async def process_line(line):
     if not steamid or not dino_type or not growth:
         return None
 
-    dino, result, error = await activate_dino(steamid, dino_type, growth)
+    dino, result, error = await save_dino(steamid, dino_type, growth)
     if error:
         return None
 
-    await send_activation_embeds(BOT_TOKEN, dino, dino_type, growth)
+    await send_dino_saved_embeds(BOT_TOKEN, dino, dino_type, growth)
     return None
 
 

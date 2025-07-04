@@ -5,7 +5,7 @@ DINOSAURS = {
         "class_name": "BP_Triceratops_C",
         "weight": "9500 кг",
         "speed": "24,6 км/ч",
-        "bite": "600 Ньютон",
+        "bite": "900 Ньютон",
         "image": "https://www.theisle-game.com/templates/yootheme/cache/1b/triceratops-the-isle-1bcea988.webp",
         "group_limit": "2 особи",
         "price": 270,
@@ -31,7 +31,7 @@ DINOSAURS = {
         "price": 220,
         "category": "Травоядные"
     },
-    "Пахицелафозавр": {
+    "Пахицефалозавр": {
         "class_name": "BP_Pachycephalosaurus_C",
         "weight": "500 кг",
         "speed": "41,8 км/ч",
@@ -131,7 +131,7 @@ DINOSAURS = {
         "price": 250,
         "category": "Плотоядные"
     },
-    "Трооднон": {
+    "Троодон": {
         "class_name": "BP_Troodon_C",
         "weight": "45 кг",
         "speed": "28,5 км/ч",
@@ -161,7 +161,7 @@ DINOSAURS = {
         "price": 25,
         "category": "Плотоядные"
     },
-    "Карнотвар": {
+    "Карнотавр": {
         "class_name": "BP_Carnotaurus_C",
         "weight": "1300 кг",
         "speed": "49,5-55,5 км/ч",

@@ -19,7 +19,7 @@ async def on_ready():
     bot.add_view(AuthView())
     print(f"Бот {bot.user} готов!")
 
-
+bot.load_extension("cogs.dino_fast_commands_cog")
 bot.load_extension("cogs.main_menu_cog")
 
 asyncio.run(init_models())

@@ -12,7 +12,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 from utils.discord_api import edit_ephemeral_message, send_dm
-from utils.scripts import save_dino_to_db, get_pending_dino, del_pending_dino
+from utils.scripts import save_dino_to_db, get_pending_dino, del_pending_dino_by_steamid
 
 BOT_TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -98,7 +98,7 @@ async def activate_dino(steamid, dino_type, growth):
         result = await save_dino_to_db(steamid, dino_type, growth)
         if isinstance(result, tuple):
             return dino, result, "save_error"
-        await del_pending_dino(steamid)
+        await del_pending_dino_by_steamid(steamid)
     except Exception as e:
         logger.error(f"Ошибка при сохранении динозавра в БД: {e}", exc_info=True)
         return dino, None, "db_exception"

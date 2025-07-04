@@ -1,9 +1,11 @@
+import asyncio
+import datetime
+
 import discord
 from discord.ui import View, Button
 
-from utils.scripts import save_dino, pending_save_dino
+from utils.scripts import pending_save_dino, del_pending_dino_by_discordid
 
-from data.dinosaurus import find_name_by_class, DINOSAURS
 
 class SaveDinoView(View):
     def __init__(self, main_menu_view: View, main_menu_embed: discord.Embed):
@@ -42,6 +44,16 @@ class SaveDinoView(View):
         self.add_item(self.start_save_button)
         self.add_item(self.back_button)
         self.add_item(self.close_button)
+
+    async def start_save_timeout(self, interaction: discord.Interaction):
+        if "успешно активирован" in interaction.message.content:
+            return
+
+        await del_pending_dino_by_discordid(interaction.user.id)
+        await interaction.followup.send(
+            content="⏰ Время на сохранение истекло!",
+            ephemeral=True
+        )
 
     @property
     def embed(self) -> discord.Embed:
@@ -95,7 +107,11 @@ class SaveDinoView(View):
                     view=None,
                     content=None
                 )
+                return False
 
+            now = datetime.datetime.now(datetime.timezone.utc)
+
+            two_minutes_later = now + datetime.timedelta(minutes=2)
             embed = discord.Embed(
                 title="Процесс сохранения динозавра начался!",
                 description="Укройтесь в безопасном месте, затем перейдите в режим отдыха в игре (Клавиша H)\n"
@@ -103,11 +119,19 @@ class SaveDinoView(View):
                 color=discord.Color.green()
             )
 
+            embed.add_field(
+                name="⏳ Для отмены сохранения осталось...",
+                value=f"<t:{int(two_minutes_later.timestamp())}:R>",
+                inline=False
+            )
+
             await interaction.response.edit_message(
                 content=None,
                 embed=embed,
                 view=None
             )
+            asyncio.create_task(self.start_save_timeout(interaction))
+
 
         elif custom_id == "back_to_menu":
             await interaction.response.edit_message(embed=self.main_menu_embed, view=self.main_menu_view)

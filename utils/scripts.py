@@ -68,8 +68,12 @@ async def save_dino_to_db(steam_id: str, dino_class: str, growth: float):
     return result
 
 
-async def del_pending_dino(steam_id: str):
+async def del_pending_dino_by_steamid(steam_id: str):
     return await PendingDinoCRUD.delete_by_steam_id(steam_id)
+
+
+async def del_pending_dino_by_discordid(discord_id: int):
+    return await PendingDinoCRUD.delete_by_discord_id(discord_id)
 
 
 async def pending_save_dino(discord_id: int, callback_url: str):

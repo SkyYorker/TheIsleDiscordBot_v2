@@ -25,7 +25,7 @@ class Players(Base):
     )
 
     dinos: Mapped[list["DinoStorage"]] = relationship(
-        "DinoStorage", back_populates="player", cascade="all, delete-orphan"
+        "DinoStorage", back_populates="player"
     )
 
 
@@ -39,7 +39,7 @@ class DinoStorage(Base):
     thirst: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     health: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     steam_id: Mapped[str] = mapped_column(
-        ForeignKey("players.steam_id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("players.steam_id"), nullable=False, index=True
     )
 
     player: Mapped["Players"] = relationship("Players", back_populates="dinos")

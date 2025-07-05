@@ -5,7 +5,6 @@ from sqlalchemy import (
     Text,
     Integer,
     ForeignKey,
-    Index,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -25,7 +24,10 @@ class Players(Base):
     )
 
     dinos: Mapped[list["DinoStorage"]] = relationship(
-        "DinoStorage", back_populates="player"
+        "DinoStorage",
+        back_populates="player",
+        cascade=None,
+        passive_deletes=True,
     )
 
 
@@ -39,10 +41,13 @@ class DinoStorage(Base):
     thirst: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     health: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     steam_id: Mapped[str] = mapped_column(
-        ForeignKey("players.steam_id"), nullable=False, index=True
+        ForeignKey("players.steam_id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True
     )
 
     player: Mapped["Players"] = relationship("Players", back_populates="dinos")
+
 
 class PendingDinoStorage(Base):
     __tablename__ = "pending_dino_storage"
@@ -59,7 +64,6 @@ class PendingDinoStorage(Base):
     hunger: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     thirst: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     health: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
 
     def __repr__(self):
         return (

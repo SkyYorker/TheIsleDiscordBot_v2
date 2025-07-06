@@ -56,6 +56,8 @@ class SteamLinkModal(Modal):
                         f"(https://steamcommunity.com/profiles/{steam_id}) успешно привязан.",
             color=discord.Color.green()
         )
+        embed.set_footer(text="🔗 Это окно можно скрыть. Чтобы начать пользоваться функционалом бота, нажмите кнопку "
+                              "'Открыть меню' сверху.")
         await interaction.response.send_message(embed=embed, ephemeral=True)
         logger.info(f"Пользователь {self.user_id} успешно привязал SteamID {steam_id}")
 

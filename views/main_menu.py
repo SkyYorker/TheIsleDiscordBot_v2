@@ -116,7 +116,7 @@ class MainMenuView(View):
                 f"🌐 [Открыть профиль Steam](https://steamcommunity.com/profiles/{self.steam_data.get('steamid', '')})\n"
                 f"\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
-                f"💎 **Количество ТК:** `{self.steam_data.get('tk', 'Неизвестно')}`\n"
+                f"💎 **Количество ТС:** `{self.steam_data.get('tk', 'Неизвестно')}`\n"
                 f"━━━━━━━━━━━━━━━━━━"
             ),
             color=discord.Color.green(),

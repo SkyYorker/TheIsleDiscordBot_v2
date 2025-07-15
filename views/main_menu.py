@@ -6,6 +6,7 @@ from discord.ui import View, Button
 from database.crud import PlayerDinoCRUD
 from utils.rcon_isle import PlayerData
 from utils.scripts import get_all_dinos, get_current_dino, kill_current_dino
+from views.deposit_view import DepositView
 from views.dino_shop import DinoShopView
 from views.dinosaurs import DinosaurSelectView, DinosaurDeleteSelectView
 from views.kill_dino_confirm import KillDinoConfirmView, kill_dino_confirm_embed
@@ -45,7 +46,7 @@ class MainMenuView(View):
             label="Пополнить баланс",
             style=discord.ButtonStyle.green,
             emoji="💵",
-            url="https://example.com/deposit",
+            custom_id="deposit",
             row=0
         ))
 
@@ -229,7 +230,9 @@ class MainMenuView(View):
                     on_confirm_callback=self.kill_dino_confirm_callback
                 )
                 await interaction.response.edit_message(embed=confirm_embed, view=confirm_view)
-
+        elif custom_id == "deposit":
+            deposit_view = DepositView(self.embed, self)
+            await deposit_view.show_deposit_modal(interaction)
         elif custom_id == "close":
             await interaction.response.defer()
             await interaction.delete_original_response()

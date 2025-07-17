@@ -28,7 +28,6 @@ class KillDinoResultView(View):
             custom_id="back_to_main_menu",
             row=0
         ))
-        self.subscribe = "Нет подписки"
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         custom_id = interaction.data.get("custom_id")
@@ -44,6 +43,8 @@ class MainMenuView(View):
 
         self.steam_data = steam_data
         self.user_id = user_id
+
+        self.subscribe = "Нет подписки"
 
         self.add_item(Button(
             label="Пополнить баланс",

@@ -5,7 +5,7 @@ from discord.ui import View, Select, Button, Modal, InputText
 
 from data.dinosaurus import DINOSAURS, CATEGORY_EMOJIS, find_name_by_class
 from database.crud import DonationCRUD
-from utils.scripts import buy_dino
+from utils.scripts import buy_dino, check_max_limit_dino
 
 
 def get_dinos_by_category(category: str) -> List[tuple[str, int]]:
@@ -76,6 +76,17 @@ class PurchaseQuantityModal(Modal):
                 description=f"У вас недостаточно ТC для покупки {quantity} {self.dino_name}.\n"
                             f"Требуется: {total_price} ТС\n"
                             f"Ваш баланс: {await DonationCRUD.get_tk(interaction.user.id)} ТC",
+                color=discord.Color.red()
+            )
+            await interaction.response.edit_message(embed=error_embed, view=self.shop_view)
+            return
+
+        checked_max_limit = await check_max_limit_dino(interaction.user.id)
+        if isinstance(checked_max_limit, tuple):
+            error_embed = discord.Embed(
+                title="❌ Недостаточно слотов",
+                description=f"У вас недостаточно слотов для покупки {quantity} {self.dino_name}.\n"
+                            f"Приобретите подписку, чтобы увеличить количество слотов",
                 color=discord.Color.red()
             )
             await interaction.response.edit_message(embed=error_embed, view=self.shop_view)

@@ -86,18 +86,27 @@ async def del_pending_dino_by_discordid(discord_id: int) -> int:
     return await PendingDinoCRUD.delete_by_discord_id(discord_id)
 
 
+async def check_max_limit_dino(discord_id: int):
+    player, steam_id = await _get_player_data(discord_id)
+    if not player:
+        return None, steam_id
+    max_dino = 6
+    subscribe = await SubscriptionCRUD.get_active_subscription(discord_id)
+    if subscribe:
+        max_dino += subscribe.get("dino_slots", 0)
+    if len(player.get("dinos", [])) >= max_dino:
+        return None, "Превышено количество сохраняемых динозавров в слоты. Сперва удалите динозавров из слотов"
+    return True
+
+
 async def pending_save_dino(discord_id: int, callback_url: str) -> Tuple[Optional[bool], Optional[str]]:
     player, steam_id = await _get_player_data(discord_id)
     if not player:
         return None, steam_id
 
-    max_dino = 6
-    subscribe = await SubscriptionCRUD.get_active_subscription(discord_id)
-    if subscribe:
-        max_dino += subscribe.get("dino_slots", 0)
-
-    if len(player.get("dinos", [])) >= max_dino:
-        return None, "Превышено количество сохраняемых динозавров в слоты. Сперва удалите динозавров из слотов"
+    checked = check_max_limit_dino(discord_id)
+    if isinstance(checked, tuple):
+        return checked
 
     isle_player, error = await _get_isle_player(steam_id)
     if error:
@@ -122,13 +131,9 @@ async def buy_dino(discord_id: int, dino_class: str, growth: int, hunger: int, t
     if not player:
         return None, steam_id
 
-    max_dino = 6
-    subscribe = await SubscriptionCRUD.get_active_subscription(discord_id)
-    if subscribe:
-        max_dino += subscribe.get("dino_slots", 0)
-
-    if len(player.get("dinos", [])) >= max_dino:
-        return None, "Превышено количество сохраняемых динозавров в слоты. Сперва удалите динозавров из слотов"
+    checked = check_max_limit_dino(discord_id)
+    if isinstance(checked, tuple):
+        return checked
 
     result = await PlayerDinoCRUD.add_dino(steam_id, dino_class, growth, hunger, thirst, health)
     return result if result else (None, "Игрок не найден")

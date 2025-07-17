@@ -104,7 +104,7 @@ async def pending_save_dino(discord_id: int, callback_url: str) -> Tuple[Optiona
     if not player:
         return None, steam_id
 
-    checked = check_max_limit_dino(discord_id)
+    checked = await check_max_limit_dino(discord_id)
     if isinstance(checked, tuple):
         return checked
 
@@ -131,7 +131,7 @@ async def buy_dino(discord_id: int, dino_class: str, growth: int, hunger: int, t
     if not player:
         return None, steam_id
 
-    checked = check_max_limit_dino(discord_id)
+    checked = await check_max_limit_dino(discord_id)
     if isinstance(checked, tuple):
         return checked
 

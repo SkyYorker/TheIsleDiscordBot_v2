@@ -114,7 +114,8 @@ class PurchaseQuantityModal(Modal):
 
             embed = discord.Embed(
                 title="✅ Покупка успешна",
-                description=f"Вы купили {success_count} {self.dino_name} за {total_price} ТС!",
+                description=f"Вы купили {success_count} {self.dino_name} за {total_price} ТС!\n\n"
+                            f"Спасибо за покупку и поддержку нашего сервера, приятной игры!",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=confirmation_view)

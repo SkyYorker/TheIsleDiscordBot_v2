@@ -77,7 +77,6 @@ class AuthView(View):
                 description="Чтобы пользоваться меню, привяжите свой аккаунт Steam.",
                 color=discord.Color.red()
             )
-            # Важно: используем экземпляр AuthView, чтобы кнопка работала!
             await interaction.response.send_message(embed=embed, view=AuthView(), ephemeral=True)
             return
 

@@ -6,6 +6,7 @@ from discord.ui import View, Button, Modal, InputText
 
 from database.crud import PlayerDinoCRUD
 from utils.steam_api import SteamAPI
+from utils.steam_auth import SteamAuth
 from views.main_menu import MainMenuView
 
 # Настройка логирования для отладки
@@ -88,7 +89,42 @@ class AuthView(View):
     @discord.ui.button(label="Привязать Steam", style=discord.ButtonStyle.green, custom_id="link_steam_button", row=1)
     async def link_steam(self, button: Button, interaction: discord.Interaction):
         logger.info(f"Пользователь {interaction.user.id} нажал 'Привязать Steam'")
-        await interaction.response.send_modal(SteamLinkModal(user_id=interaction.user.id))
+
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            result = await SteamAuth.generate_auth_link(interaction.user.id)
+            if "error" in result:
+                logger.info(f"Произошла ошибка при привязке Steam у {interaction.user.id}")
+                await interaction.followup.send(f"❌ Ошибка: {result['error']}", ephemeral=True)
+                return
+
+            auth_url = result.get("Url", "")
+            qrcode_base64 = result.get("Qrcode", "")
+
+            if not auth_url or not qrcode_base64:
+                await interaction.followup.send("⚠️ Не удалось получить данные аутентификации", ephemeral=True)
+                return
+
+            embed = discord.Embed(
+                title="Steam Аутентификация",
+                description=f"Ссылка для входа: [Нажмите здесь]({auth_url})",
+                color=discord.Color.blue()
+            )
+            embed.set_footer(text="QR-код действителен в течение 5 минут")
+
+            qrcode_file = SteamAuth.create_qrcode_file(qrcode_base64)
+
+            await interaction.followup.send(
+                embed=embed,
+                file=qrcode_file,
+                ephemeral=True
+            )
+
+            logger.info(f"Успешно отправлена Steam аутентификация для {interaction.user}")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке: {str(e)}")
+            await interaction.followup.send("⚠️ Произошла ошибка при создании сообщения", ephemeral=True)
 
     async def check_steam_link(self, user_id: int) -> bool:
         player = await PlayerDinoCRUD.get_player_info(user_id)

@@ -120,7 +120,7 @@ class MainMenuView(View):
 
     async def update_player_data(self, user_id: int):
         updated_data = await DonationCRUD.get_tk(user_id)
-        if updated_data is not None and self.steam_data:
+        if updated_data is not None:
             self.tk = updated_data
         sub = await SubscriptionCRUD.get_active_subscription(user_id)
         if sub:

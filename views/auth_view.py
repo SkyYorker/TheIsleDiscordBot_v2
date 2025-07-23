@@ -128,7 +128,7 @@ class AuthView(View):
 
     async def check_steam_link(self, user_id: int) -> bool:
         player = await PlayerDinoCRUD.get_player_info(user_id)
-        if not player.get("steam_id"):
+        if not player.get("player", {}).get("steam_id"):
             return False
         logger.info(f"Проверка привязки Steam для пользователя {user_id}: {'есть' if player else 'нет'}")
         return player is not None

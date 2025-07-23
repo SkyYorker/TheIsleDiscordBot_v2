@@ -50,7 +50,7 @@ class SubscriptionManagementView(View):
             color=discord.Color.blue()
         )
 
-        self._active_sub = await SubscriptionCRUD.get_active_subscription(self.user_id)
+        self._active_sub = await SubscriptionCRUD.get_active_subscription_by_discord_id(self.user_id)
 
         for item in self.children:
             if item.custom_id and item.custom_id.startswith("subscribe_"):
@@ -109,7 +109,7 @@ class SubscriptionManagementView(View):
 
         if custom_id == "toggle_auto_renew":
             if not self._active_sub:
-                self._active_sub = await SubscriptionCRUD.get_active_subscription(self.user_id)
+                self._active_sub = await SubscriptionCRUD.get_active_subscription_by_discord_id(self.user_id)
                 if not self._active_sub:
                     await interaction.response.defer()
                     return False
@@ -120,7 +120,7 @@ class SubscriptionManagementView(View):
                 {'auto_renewal': new_state}
             )
 
-            self._active_sub = await SubscriptionCRUD.get_active_subscription(self.user_id)
+            self._active_sub = await SubscriptionCRUD.get_active_subscription_by_discord_id(self.user_id)
 
             await interaction.response.edit_message(
                 embed=await self.get_embed(),
@@ -224,7 +224,7 @@ class SubscriptionConfirmView(View):
             return True
 
         if custom_id == "confirm_purchase":
-            active_sub = await SubscriptionCRUD.get_active_subscription(self.user_id)
+            active_sub = await SubscriptionCRUD.get_active_subscription_by_discord_id(self.user_id)
             if active_sub:
                 embed = discord.Embed(
                     title="Ошибка",
@@ -244,7 +244,7 @@ class SubscriptionConfirmView(View):
                 await interaction.response.edit_message(embed=embed, view=self)
                 return True
 
-            sub = await SubscriptionCRUD.add_subscription(
+            sub = await SubscriptionCRUD.add_subscription_by_discord_id(
                 discord_id=self.user_id,
                 tier=self.tier,
                 duration_days=30

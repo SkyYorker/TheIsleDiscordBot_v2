@@ -68,7 +68,7 @@ class PurchaseQuantityModal(Modal):
             return
 
         total_price = self.price * quantity
-        has_enough_tk = await DonationCRUD.check_balance(interaction.user.id, total_price)
+        has_enough_tk = await DonationCRUD.check_balance_by_discordid(interaction.user.id, total_price)
 
         if not has_enough_tk:
             error_embed = discord.Embed(

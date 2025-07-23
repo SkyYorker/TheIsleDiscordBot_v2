@@ -39,7 +39,7 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("players.discord_id"), index=True)
+    steam_id: Mapped[str] = mapped_column(Text, index=True, nullable=False)
     tier: Mapped[SubscriptionTier] = mapped_column(SQLEnum(SubscriptionTier), nullable=False)
     dino_slots: Mapped[int] = mapped_column(Integer, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -56,7 +56,7 @@ class Subscription(Base):
     @classmethod
     def create(
             cls,
-            player_id: int,
+            steam_id: str,
             tier: SubscriptionTier,
             duration_days: int = 30
     ) -> "Subscription":
@@ -65,7 +65,7 @@ class Subscription(Base):
 
         now = datetime.now(UTC)
         return cls(
-            player_id=player_id,
+            steam_id=steam_id,
             tier=tier,
             dino_slots=SUBSCRIPTION_CONFIG[tier]["dino_slots"],
             is_active=True,
@@ -87,6 +87,7 @@ class Players(Base):
 
     subscriptions: Mapped[list["Subscription"]] = relationship(
         back_populates="player",
+        primaryjoin="foreign(Subscription.steam_id)==Players.steam_id",
         order_by="Subscription.purchase_date.desc()"
     )
 

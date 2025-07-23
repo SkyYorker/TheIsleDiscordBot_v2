@@ -122,7 +122,7 @@ class MainMenuView(View):
         updated_data = await DonationCRUD.get_tk(user_id)
         if updated_data is not None:
             self.tk = updated_data
-        sub = await SubscriptionCRUD.get_active_subscription(user_id)
+        sub = await SubscriptionCRUD.get_active_subscription_by_discord_id(user_id)
         if sub:
             self.subscribe = sub.get("tier", "Нет подписки")
 

@@ -83,7 +83,7 @@ class SubscriptionTasks:
         tier = SubscriptionTier[sub['tier']]
         price = SUBSCRIPTION_CONFIG[tier]['price']
 
-        if not await DonationCRUD.check_balance(sub['player_id'], price):
+        if not await DonationCRUD.check_balance_by_discordid(sub['player_id'], price):
             logger.info(f"Недостаточно средств для автопродления у пользователя {sub['player_id']}")
             return False
 

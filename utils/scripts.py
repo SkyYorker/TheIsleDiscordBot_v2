@@ -91,7 +91,7 @@ async def check_max_limit_dino(discord_id: int, desired_dinos=1):
     if not player:
         return None, steam_id
     max_dino = 6
-    subscribe = await SubscriptionCRUD.get_active_subscription_by_steamid(steam_id)
+    subscribe = await SubscriptionCRUD.get_active_subscription(discord_id)
     if subscribe:
         max_dino += subscribe.get("dino_slots", 0)
     if len(player.get("dinos", [])) + desired_dinos > max_dino:

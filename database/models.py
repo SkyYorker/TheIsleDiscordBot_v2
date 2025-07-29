@@ -23,12 +23,12 @@ SUBSCRIPTION_CONFIG = {
         "discord_role_id": 1395453023727390863
     },
     SubscriptionTier.PREMIUM: {
-        "price": 799,
+        "price": 599,
         "dino_slots": 6,
         "discord_role_id": 1395452649045753936
     },
     SubscriptionTier.SUPREME: {
-        "price": 1599,
+        "price": 899,
         "dino_slots": 8,
         "discord_role_id": 1395452801970344017
     }

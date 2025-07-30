@@ -126,16 +126,16 @@ class AuthView(View):
             logger.error(f"Ошибка при отправке: {str(e)}")
             await interaction.followup.send("⚠️ Произошла ошибка при создании сообщения", ephemeral=True)
 
-    async def check_steam_link(self, user_id: int) -> bool:
-        player = await PlayerDinoCRUD.get_player_info(user_id)
+    async def check_steam_link(self, discord_id: int) -> bool:
+        player = await PlayerDinoCRUD.get_player_info(discord_id)
         steam_id = ""
         if isinstance(player, dict):
             steam_id = player.get("player", {}).get("steam_id")
-        logger.info(f"Проверка привязки Steam для пользователя {user_id}: {'есть' if player and steam_id else 'нет'}")
+        logger.info(f"Проверка привязки Steam для пользователя {discord_id}: {'есть' if player and steam_id else 'нет'}")
         return player is not None and steam_id
 
-    async def get_steam_data(self, user_id: int) -> dict:
-        player = await PlayerDinoCRUD.get_player_info(user_id)
+    async def get_steam_data(self, discord_id: int) -> dict:
+        player = await PlayerDinoCRUD.get_player_info(discord_id)
         if not player:
             return {}
         player = player["player"]

@@ -205,10 +205,15 @@ async def restore_dino_script(discord_id: int, dino_id: int) -> Tuple[Optional[b
     await send_dm_message(HOST, PORT, PASSWORD, current_dino.player_id, "Ваш динозавр успешно активирован")
     return True
 
+
 async def give_nutrients(discord_id: int) -> Tuple[Optional[bool], Optional[str]]:
     player, steam_id = await _get_player_data(discord_id)
     if not player:
         return None, steam_id
+
+    isle_player, error = await _get_isle_player(steam_id)
+    if error:
+        return None, error
 
     result = await set_nutrients(steam_id, 100, 100, 100)
     if not isinstance(result, dict) or not result.get("success"):
@@ -217,15 +222,20 @@ async def give_nutrients(discord_id: int) -> Tuple[Optional[bool], Optional[str]
                                                                        "динозавра")
     return True
 
+
 async def give_food(discord_id: int) -> Tuple[Optional[bool], Optional[str]]:
     player, steam_id = await _get_player_data(discord_id)
     if not player:
         return None, steam_id
 
+    isle_player, error = await _get_isle_player(steam_id)
+    if error:
+        return None, error
+
     result = await set_food(steam_id, 100, 100)
+
     if not isinstance(result, dict) or not result.get("success"):
         return None, "Игрока нет на сервере" if isinstance(result,
                                                            dict) else ("Неизвестная ошибка во время выдачи еды/воды "
                                                                        "динозавра")
     return True
-

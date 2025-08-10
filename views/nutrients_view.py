@@ -69,7 +69,8 @@ class OtherServicesView(View):
                             f"Ваш баланс: {await DonationCRUD.get_tk(discord_id)} ТC",
                 color=discord.Color.red()
             )
-            await interaction.followup.edit_message(interaction.message.id, embed=error_embed, view=self.shop_view)
+            await interaction.followup.edit_message(message_id=interaction.message.id, embed=error_embed,
+                                                    view=self.shop_view)
             return False
 
         result = await DonationCRUD.remove_tk(interaction.user.id, total_price)

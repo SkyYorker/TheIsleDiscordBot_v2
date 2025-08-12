@@ -43,13 +43,18 @@ class AdminDonateCog(commands.Cog):
             amount: Option(int, "Количество ТС для изъятия", min_value=1)
     ):
         discord_id = user.id
-        user_tk = await DonationCRUD.remove_tk(discord_id, amount)
+        user_tk = await DonationCRUD.get_tk(discord_id)
         if user_tk is None:
             await ctx.respond(f"❌ Пользователь с Discord ID `{discord_id}` не найден в базе данных.", ephemeral=True)
             return
+        is_completed_remove = await DonationCRUD.remove_tk(discord_id, amount)
+        if not is_completed_remove:
+            await ctx.respond(f"❌ Не удалось изъять ТС у пользователя {user.mention}, т.к. {user_tk} ТС",
+                              ephemeral=True)
+            return
         await ctx.respond(
             f"✅ Изъято {amount} ТС у пользователя {user.mention} (Discord ID `{discord_id}`). "
-            f"Теперь у него {user_tk['tk']} ТС.",
+            f"Теперь у него {user_tk} ТС.",
             ephemeral=True
         )
 

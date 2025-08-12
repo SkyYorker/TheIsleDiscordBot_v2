@@ -14,6 +14,7 @@ class MainMenuCog(commands.Cog):
 
     @commands.slash_command(name="setup_menu", description="Отправить кнопку 'Открыть меню'")
     @commands.has_permissions(administrator=True)
+    @commands.guild_only()
     async def setup_menu(self, ctx):
         embed = discord.Embed(
             title="Добро пожаловать в TAPKIN SUPREME BOT",

@@ -14,7 +14,7 @@ class DinoFastCommandsCog(commands.Cog):
         description="Выдать рост/голод/здоровье/жажду игроку"
     )
     @commands.has_permissions(administrator=True)
-    @commands.guild_only
+    @commands.guild_only()
     async def setup_menu(
             self,
             ctx: discord.ApplicationContext,

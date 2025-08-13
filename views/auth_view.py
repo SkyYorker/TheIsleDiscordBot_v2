@@ -64,74 +64,35 @@ class AuthView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    async def on_error(self, interaction: discord.Interaction, error: Exception, item):
-        logger.error(f"Ошибка в AuthView: {error}", exc_info=True)
-
-        try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "⚠️ Произошла техническая ошибка. Попробуйте еще раз.",
-                    ephemeral=True
-                )
-            else:
-                await interaction.followup.send(
-                    "⚠️ Произошла техническая ошибка. Попробуйте еще раз.",
-                    ephemeral=True
-                )
-        except Exception as e:
-            logger.error(f"Не удалось отправить сообщение об ошибке: {e}")
-
     @discord.ui.button(label="Открыть меню", style=discord.ButtonStyle.blurple, emoji="🎮", custom_id="open_menu_button")
-    async def open_menu(self, interaction: discord.Interaction, button: Button):
-        try:
-            logger.info(f"Пользователь {interaction.user.id} нажал 'Открыть меню'")
+    async def open_menu(self, button: Button, interaction: discord.Interaction):
+        logger.info(f"Пользователь {interaction.user.id} нажал 'Открыть меню'")
+        is_linked = await self.check_steam_link(interaction.user.id)
 
-            if interaction.response.is_done():
-                logger.warning(f"Interaction уже обработан для пользователя {interaction.user.id}")
-                return
+        if not is_linked:
+            embed = discord.Embed(
+                title="❌ Steam не привязан",
+                description="Чтобы пользоваться меню, привяжите свой аккаунт Steam.",
+                color=discord.Color.red()
+            )
+            await interaction.response.send_message(embed=embed, view=AuthView(), ephemeral=True)
+            return
 
-            is_linked = await self.check_steam_link(interaction.user.id)
-
-            if not is_linked:
-                embed = discord.Embed(
-                    title="❌ Steam не привязан",
-                    description="Чтобы пользоваться меню, привяжите свой аккаунт Steam.",
-                    color=discord.Color.red()
-                )
-                await interaction.response.send_message(embed=embed, view=AuthView(), ephemeral=True)
-                return
-
-            steam_data = await self.get_steam_data(interaction.user.id)
-            if not steam_data:
-                embed = discord.Embed(
-                    title="❌ Ошибка получения данных Steam",
-                    description="Не удалось получить данные Steam. Попробуйте позже.",
-                    color=discord.Color.red()
-                )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-
-            view = MainMenuView(steam_data, interaction.user.id)
-            await view.update_player_data(interaction.user.id)
-            await interaction.response.send_message(embed=view.embed, view=view, ephemeral=True)
-
-        except Exception as e:
-            logger.error(f"Ошибка в open_menu для пользователя {interaction.user.id}: {e}", exc_info=True)
+        steam_data = await steam_api.get_steam_data(interaction.user.id)
+        view = MainMenuView(steam_data, interaction.user.id)
+        await view.update_player_data(interaction.user.id)
+        await interaction.response.send_message(embed=view.embed, view=view, ephemeral=True)
 
     @discord.ui.button(label="Привязать Steam", style=discord.ButtonStyle.green, custom_id="link_steam_button", row=1)
-    async def link_steam(self, interaction: discord.Interaction, button: Button):
+    async def link_steam(self, button: Button, interaction: discord.Interaction):
+        logger.info(f"Пользователь {interaction.user.id} нажал 'Привязать Steam'")
+
+        await interaction.response.defer(ephemeral=True)
+
         try:
-            logger.info(f"Пользователь {interaction.user.id} нажал 'Привязать Steam'")
-
-            if interaction.response.is_done():
-                logger.warning(f"Interaction уже обработан для пользователя {interaction.user.id}")
-                return
-
-            await interaction.response.defer(ephemeral=True)
-
             result = await SteamAuth.generate_auth_link(interaction.user.id)
             if "error" in result:
-                logger.info(f"Произошла ошибка при привязке Steam у {interaction.user.id}: {result['error']}")
+                logger.info(f"Произошла ошибка при привязке Steam у {interaction.user.id}")
                 await interaction.followup.send(f"❌ Ошибка: {result['error']}", ephemeral=True)
                 return
 
@@ -158,69 +119,33 @@ class AuthView(View):
             )
 
             logger.info(f"Успешно отправлена Steam аутентификация для {interaction.user}")
-
         except Exception as e:
-            logger.error(f"Ошибка в link_steam для пользователя {interaction.user.id}: {e}", exc_info=True)
-            try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message("⚠️ Произошла ошибка при создании сообщения",
-                                                            ephemeral=True)
-                else:
-                    await interaction.followup.send("⚠️ Произошла ошибка при создании сообщения", ephemeral=True)
-            except:
-                pass
+            logger.error(f"Ошибка при отправке: {str(e)}")
+            await interaction.followup.send("⚠️ Произошла ошибка при создании сообщения", ephemeral=True)
 
     async def check_steam_link(self, discord_id: int) -> bool:
-        try:
-            player = await PlayerDinoCRUD.get_player_info(discord_id)
-            steam_id = ""
-            if isinstance(player, dict):
-                steam_id = player.get("player", {}).get("steam_id")
-            logger.info(
-                f"Проверка привязки Steam для пользователя {discord_id}: {'есть' if player and steam_id else 'нет'}")
-            return player is not None and steam_id
-        except Exception as e:
-            logger.error(f"Ошибка при проверке привязки Steam для {discord_id}: {e}")
-            return False
+        player = await PlayerDinoCRUD.get_player_info(discord_id)
+        steam_id = ""
+        if isinstance(player, dict):
+            steam_id = player.get("player", {}).get("steam_id")
+        logger.info(
+            f"Проверка привязки Steam для пользователя {discord_id}: {'есть' if player and steam_id else 'нет'}")
+        return player is not None and steam_id
 
     async def get_steam_data(self, discord_id: int) -> dict:
-        try:
-            player = await PlayerDinoCRUD.get_player_info(discord_id)
-            if not player:
-                return {}
-            player = player["player"]
-            steam_id = player["steam_id"]
-            if not steam_id:
-                return {}
-
-            steam_info = await steam_api.get_player_info(steam_id)
-            if not steam_info or not steam_info.get("personaname") or steam_info.get("error"):
-                return {}
-
-            return {
-                "username": steam_info.get("personaname", "Unknown"),
-                "avatar": steam_info.get("avatarfull", ""),
-                "steamid": steam_id,
-                "tk": player["tk"]
-            }
-        except Exception as e:
-            logger.error(f"Ошибка при получении данных Steam для {discord_id}: {e}")
+        player = await PlayerDinoCRUD.get_player_info(discord_id)
+        if not player:
             return {}
-
-
-async def health_check_views(bot):
-    import asyncio
-
-    while True:
-        try:
-            await asyncio.sleep(3600)
-
-            auth_view_exists = any(isinstance(view, AuthView) for view in bot.persistent_views)
-
-            if not auth_view_exists:
-                logger.warning("AuthView не найден в persistent_views, добавляем заново")
-                bot.add_view(AuthView())
-
-        except Exception as e:
-            logger.error(f"Ошибка в health_check_views: {e}")
-            await asyncio.sleep(60)
+        player = player["player"]
+        steam_id = player["steam_id"]
+        if not steam_id:
+            return {}
+        steam_info = await steam_api.get_player_info(steam_id)
+        if not steam_info or not steam_info.get("personaname") or steam_info.get("error"):
+            return {}
+        return {
+            "username": steam_info.get("personaname", "Unknown"),
+            "avatar": steam_info.get("avatarfull", ""),
+            "steamid": steam_id,
+            "tk": player["tk"]
+        }

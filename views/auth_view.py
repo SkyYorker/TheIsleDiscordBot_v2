@@ -64,6 +64,13 @@ class AuthView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
+        logger.error(f"Ошибка в AuthView: {error}", exc_info=True)
+        if interaction.response.is_done():
+            await interaction.followup.send("⚠️ Произошла ошибка. Попробуйте позже.", ephemeral=True)
+        else:
+            await interaction.response.send_message("⚠️ Произошла ошибка. Попробуйте позже.", ephemeral=True)
+
     @discord.ui.button(label="Открыть меню", style=discord.ButtonStyle.blurple, emoji="🎮", custom_id="open_menu_button")
     async def open_menu(self, button: Button, interaction: discord.Interaction):
         logger.info(f"Пользователь {interaction.user.id} нажал 'Открыть меню'")

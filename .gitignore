@@ -185,3 +185,11 @@ test.py
 # БД
 users.db
 main.db
+
+# Архивы для деплоя
+*.zip
+TheIsleDiscordBot_deploy.zip
+
+# Временные файлы
+startup_output.txt
+pack.ps1

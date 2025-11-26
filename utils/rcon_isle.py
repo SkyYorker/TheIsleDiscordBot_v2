@@ -2,7 +2,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict
 
-from gamercon_async import EvrimaRCON
+try:
+    from gamercon_async import EvrimaRCON
+except ImportError:
+    EvrimaRCON = None
+    print("WARNING: gamercon_async not installed. RCON functions will not work.")
 
 
 @dataclass
@@ -85,6 +89,8 @@ def find_player_by_id(players: List[PlayerData], player_id: str) -> Optional[Pla
 
 
 async def fetch_all_players(rcon_host: str, rcon_port: int, rcon_password: str) -> List[PlayerData]:
+    if EvrimaRCON is None:
+        raise ImportError("gamercon_async not installed. Install with: pip install gamercon-async")
     rcon = EvrimaRCON(rcon_host, rcon_port, rcon_password)
     await rcon.connect()
     response = await rcon.send_command(b"\x02" + b"\x77" + b"\x00")
@@ -98,6 +104,8 @@ async def fetch_player_by_id(rcon_host: str, rcon_port: int, rcon_password: str,
 
 
 async def send_dm_message(rcon_host: str, rcon_port: int, rcon_password: str, player_id: str, content="test"):
+    if EvrimaRCON is None:
+        raise ImportError("gamercon_async not installed. Install with: pip install gamercon-async")
     player = await fetch_player_by_id(rcon_host, rcon_port, rcon_password, player_id)
     if not player:
         return
@@ -110,6 +118,8 @@ async def send_dm_message(rcon_host: str, rcon_port: int, rcon_password: str, pl
 
 async def rcon_ban(rcon_host: str, rcon_port: int, rcon_password: str, player_id: str, duration: int,
                    reason="Отсутствует"):
+    if EvrimaRCON is None:
+        raise ImportError("gamercon_async not installed. Install with: pip install gamercon-async")
     player = await fetch_player_by_id(rcon_host, rcon_port, rcon_password, player_id)
     if not player:
         return

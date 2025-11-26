@@ -34,7 +34,7 @@ class MainMenuCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.menu_message_id = 1395526823135150141
-        self.menu_channel_id = 1376547828087783544
+        self.menu_channel_id = 1431019870086234235
         self.menu_embed = self._create_menu_embed()
         self.refresh_auth_view.start()
 

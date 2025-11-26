@@ -117,3 +117,23 @@ class PendingDinoStorage(Base):
             f"<PendingDinoStorage(id={self.id}, steam_id={self.steam_id}, "
             f"discord_id={self.discord_id}, created_at={self.created_at}, url={self.url})>"
         )
+
+
+class RoleBonusUsage(Base):
+    __tablename__ = "role_bonus_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    discord_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    role_name: Mapped[str] = mapped_column(Text, nullable=False)  # "Первопроходец" или "Nitro Booster"
+    used_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.now(UTC), nullable=False, index=True
+    )
+    week_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )  # Начало недели для отслеживания
+
+    def __repr__(self):
+        return (
+            f"<RoleBonusUsage(id={self.id}, discord_id={self.discord_id}, "
+            f"role_name={self.role_name}, used_at={self.used_at}, week_start={self.week_start})>"
+        )

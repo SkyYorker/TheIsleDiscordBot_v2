@@ -50,14 +50,3 @@ class UnitPayUrlGenerator:
 
         return f"{base_url}?{query_string}"
 
-
-if __name__ == "__main__":
-    amount_val = 1
-    account_val = '389067941280481293_discord'
-    description_val = 'Тест Discord'
-
-    redirect_url = UnitPayUrlGenerator.generate_redirect_url(
-        amount=amount_val,
-        account=account_val,
-        description=description_val,
-    )

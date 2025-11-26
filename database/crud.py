@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from . import async_session_maker
 from . import engine
 from .models import PendingDinoStorage
-from .models import Players, DinoStorage, Base, Subscription, SubscriptionTier
+from .models import Players, DinoStorage, Base, Subscription, SubscriptionTier, RoleBonusUsage
 
 
 async def init_models():
@@ -579,3 +579,95 @@ class PendingDinoCRUD:
             "thirst": obj.thirst,
             "health": obj.health,
         }
+
+
+class RoleBonusCRUD:
+    """CRUD операции для бонусов по ролям"""
+    
+    @staticmethod
+    def get_week_start(dt: datetime) -> datetime:
+        """Получить начало недели (понедельник) для даты"""
+        # Получаем понедельник текущей недели
+        days_since_monday = dt.weekday()
+        week_start = dt.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days_since_monday)
+        # Убеждаемся, что время имеет timezone
+        if week_start.tzinfo is None:
+            week_start = week_start.replace(tzinfo=UTC)
+        return week_start
+    
+    @staticmethod
+    async def get_weekly_usage_count(discord_id: int, role_name: str) -> int:
+        """Получить количество использований бонуса в текущей неделе"""
+        async with async_session_maker() as session:
+            now = datetime.now(UTC)
+            week_start = RoleBonusCRUD.get_week_start(now)
+            
+            result = await session.execute(
+                select(RoleBonusUsage)
+                .where(RoleBonusUsage.discord_id == discord_id)
+                .where(RoleBonusUsage.role_name == role_name)
+                .where(RoleBonusUsage.week_start == week_start)
+            )
+            usages = result.scalars().all()
+            return len(usages)
+    
+    @staticmethod
+    async def can_use_bonus(discord_id: int, role_name: str, max_uses_per_week: int) -> tuple[bool, int, Optional[str]]:
+        """
+        Проверить, может ли пользователь использовать бонус
+        
+        Returns:
+            (can_use, current_uses, error_message)
+        """
+        current_uses = await RoleBonusCRUD.get_weekly_usage_count(discord_id, role_name)
+        
+        if current_uses >= max_uses_per_week:
+            week_start = RoleBonusCRUD.get_week_start(datetime.now(UTC))
+            next_week = week_start + timedelta(days=7)
+            return False, current_uses, f"Вы уже использовали все бесплатные кормления на эту неделю. Следующее доступно: {next_week.strftime('%d.%m.%Y')}"
+        
+        return True, current_uses, None
+    
+    @staticmethod
+    async def record_bonus_usage(discord_id: int, role_name: str) -> Dict[str, Any]:
+        """Записать использование бонуса"""
+        async with async_session_maker() as session:
+            now = datetime.now(UTC)
+            week_start = RoleBonusCRUD.get_week_start(now)
+            
+            usage = RoleBonusUsage(
+                discord_id=discord_id,
+                role_name=role_name,
+                week_start=week_start
+            )
+            session.add(usage)
+            await session.commit()
+            await session.refresh(usage)
+            
+            return {
+                "id": usage.id,
+                "discord_id": usage.discord_id,
+                "role_name": usage.role_name,
+                "used_at": usage.used_at,
+                "week_start": usage.week_start
+            }
+    
+    @staticmethod
+    async def get_user_bonus_history(discord_id: int, role_name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Получить историю использования бонусов пользователем"""
+        async with async_session_maker() as session:
+            query = select(RoleBonusUsage).where(RoleBonusUsage.discord_id == discord_id)
+            if role_name:
+                query = query.where(RoleBonusUsage.role_name == role_name)
+            
+            result = await session.execute(query.order_by(RoleBonusUsage.used_at.desc()))
+            return [
+                {
+                    "id": usage.id,
+                    "discord_id": usage.discord_id,
+                    "role_name": usage.role_name,
+                    "used_at": usage.used_at,
+                    "week_start": usage.week_start
+                }
+                for usage in result.scalars()
+            ]
